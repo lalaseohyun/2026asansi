@@ -60,7 +60,7 @@ function startAuth() {
       try { await signInAnonymously(auth); }
       catch (e) {
         S.auth = 'error';
-        S.authError = /operation-not-allowed|admin-restricted/.test(e.code)
+        S.authError = /operation-not-allowed|admin-restricted|configuration-not-found/.test(e.code)
           ? 'Firebase 콘솔 > Authentication > 로그인 방법에서 "익명"을 켜 주세요.'
           : `로그인 실패 (${e.code}). js/config.js의 apiKey를 확인해 주세요.`;
         draw();
