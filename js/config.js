@@ -23,9 +23,9 @@ export const EVENT = {
 // Firebase 콘솔 > 프로젝트 설정 > 내 앱 > SDK 설정 및 구성의 값을 그대로 붙여 넣는다.
 // databaseURL은 지역이 포함된 전체 주소여야 한다 (...asia-southeast1.firebasedatabase.app).
 export const FIREBASE = {
-  apiKey: 'YOUR_API_KEY',
-  authDomain: 'YOUR_PROJECT.firebaseapp.com',
-  databaseURL: 'https://YOUR_PROJECT-default-rtdb.asia-southeast1.firebasedatabase.app',
-  projectId: 'YOUR_PROJECT',
-  appId: 'YOUR_APP_ID'
+  apiKey: 'AIzaSyCNW2dLrhnm8Koq4qgm1nQ-Iw_oq8XRyGw',
+  authDomain: 'asansi-8b9c2.firebaseapp.com',
+  databaseURL: 'https://asansi-8b9c2-default-rtdb.asia-southeast1.firebasedatabase.app',
+  projectId: 'asansi-8b9c2',
+  appId: '1:108195926354:web:0ca8fae73cfb90f99bea8b'
 };
