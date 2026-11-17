@@ -1,0 +1,5 @@
+.claude/
+*.skill
+live-quiz-module-spec.md
+live-quiz-architecture-SKILL.md
+asan_coop_quiz_v2.json
