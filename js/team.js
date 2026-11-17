@@ -165,6 +165,12 @@ async function submitAnswer() {
 const bar = document.getElementById('bar');
 const foot = document.getElementById('foot');
 const numLabel = i => `${MARKS[i]}번`;
+// 한글 받침 유무로 조사(을/를, 이/가)를 고른다. '존'→'존을', '조'→'조를'
+const josa = (w, withB, noB) => {
+  const s = String(w ?? ''); const c = s.charCodeAt(s.length - 1);
+  const hasB = c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 !== 0;
+  return s + (hasB ? withB : noB);
+};
 
 const center = (...kids) => h('div', { class: 'center' }, ...kids);
 const badges = L => h('div', { class: 'badges' }, h('span', { class: 'badge num' }, `문제 ${L.no} / ${L.total}`));
@@ -174,10 +180,10 @@ const waitbox = (title, sub, slim) => h('div', { class: `waitbox ${slim ? 'slim'
 function viewJoin() {
   if (S.join.teamId) return viewPin();
   return [
-    h('div', { class: 'h' }, `우리 ${EVENT.teamLabel}을 골라주세요`),
+    h('div', { class: 'h' }, `우리 ${josa(EVENT.teamLabel, '을', '를')} 골라주세요`),
     h('div', { class: 'sub' }, EVENT.joinMode === 'pin'
       ? `${EVENT.teamLabel}마다 숫자 4자리 PIN을 함께 씁니다`
-      : `${EVENT.teamLabel}을 누르면 바로 입장합니다`),
+      : `${josa(EVENT.teamLabel, '을', '를')} 누르면 바로 입장합니다`),
     h('div', { class: 'grid' }, TEAMS.map(t =>
       h('button', { class: `tcard ${S.teams?.[t.id] ? 'taken' : ''}`, onclick: () => pickTeam(t) },
         h('div', { class: 'n' }, t.name),
@@ -193,7 +199,7 @@ function viewPin() {
     h('div', { class: 'big team' }, team.name),
     team.members.length > 0 && h('div', { class: 'sub' }, team.members.join(' · ')),
     h('div', { class: 'sub' }, isNew
-      ? `${team.name}이 맞나요? 지금 정하는 숫자 4자리를 같은 ${EVENT.teamLabel} 분들께 알려주세요`
+      ? `${josa(team.name, '이', '가')} 맞나요? 지금 정하는 숫자 4자리를 같은 ${EVENT.teamLabel} 분들께 알려주세요`
       : `${team.name}에서 정한 숫자 4자리를 입력해주세요`),
     h('input', {
       id: 'pin', class: 'pin', type: 'tel', inputMode: 'numeric', maxLength: 4,
