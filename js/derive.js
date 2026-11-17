@@ -18,14 +18,16 @@ export function deriveLive(state, questions, { ranking } = {}) {
   const q = questions[s.index];
   if (s.phase !== 'quiz' || !q) return { phase: 'lobby' };
 
+  const realTotal = questions.filter(x => !x.practice).length;
   const live = {
-    phase: 'quiz', id: q.id, no: q.no, total: questions.length,
+    phase: 'quiz', id: q.id, no: q.no, total: realTotal, practice: !!q.practice,
     question: q.question, open: !!s.open, revealed: !!s.revealed
   };
   if (s.asked.includes(q.id) || s.revealed) live.choices = q.choices;
   if (s.revealed) {
     live.answer = q.answer;
     live.explanation = q.explanation;
+    if (q.source) live.source = q.source;
   }
   return live;
 }

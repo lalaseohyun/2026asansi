@@ -41,7 +41,7 @@
   display:grid;place-items:center;font-weight:800;font-size:calc(clamp(27px,2.4vw,44px) * var(--cs,1));color:var(--ink2)}
 /* 보기 글자 — 이 이상 키우면 "약 6,700명" 같은 보기가 칸 안에서 두 줄로 꺾인다
    (칸 폭 402px, 좌우 여백 뺀 글자 자리 ≈350px @1920, 2026-09-08 실측) */
-.ch .t{font-size:calc(clamp(31px,3.6vw,68px) * var(--cs,1));font-weight:700;letter-spacing:-.028em;line-height:1.24}
+.ch .t{font-size:calc(clamp(44px,5vw,104px) * var(--cs,1));font-weight:700;letter-spacing:-.028em;line-height:1.24}
 /* 보기 부연설명 — 목업에서 지정한 부드러운 노랑(#F6D049), 본문의 0.7배 */
 .ch .t .sub{font-size:.7em;font-weight:700;color:#F6D049}
 .ch .tally{font-size:clamp(27px,2.44vw,41px);font-weight:700;color:var(--ink3);font-variant-numeric:tabular-nums}
@@ -68,12 +68,12 @@
    시작해서 18px까지 더 줄인다(js/host/sessions/quiz.js). */
 .answerbox{background:var(--beige);color:var(--beigeInk);border-radius:24px;
   margin-top:clamp(14px,2.2vh,32px);padding:clamp(14px,2vh,28px) clamp(39px,4.68vw,86px);
-  font-size:clamp(26px,2.5vw,44px);line-height:1.45;font-weight:500;letter-spacing:-.02em;
+  font-size:clamp(15px,1.4vw,24px);line-height:1.45;font-weight:500;letter-spacing:-.02em;
   text-align:center;flex:1 1 auto;min-height:0;overflow:auto;
   display:flex;flex-direction:column;justify-content:center}
 .answerbox p+p{margin-top:clamp(3px,.6vh,9px)}
 .answerbox strong{color:#C60909}
-.answerbox .src{font-size:clamp(19px,1.7vw,28px);color:rgba(58,58,56,.5);margin-top:clamp(8px,1.2vh,16px);font-weight:600}
+.answerbox .src{font-size:clamp(12px,1.1vw,17px);color:rgba(58,58,56,.5);margin-top:clamp(8px,1.2vh,16px);font-weight:600}
 
 /* 화면 맨 아래 묶음 — 제출현황(있을 때) + 남은 페이지 점.
    정답 페이지에서는 해설 박스가 남는 자리를 다 쓰므로 auto 여백을 빼준다. */
@@ -91,7 +91,7 @@
   gap:calc(clamp(5px,.8vh,11px) * var(--cs,1));border-radius:18px}
 .qview.revealed .ch .n{width:calc(clamp(54px,4.1vw,74px) * var(--cs,1));height:calc(clamp(54px,4.1vw,74px) * var(--cs,1));
   font-size:calc(clamp(27px,2.25vw,39px) * var(--cs,1))}
-.qview.revealed .ch .t{font-size:calc(clamp(24px,2.7vw,48px) * var(--cs,1))}
+.qview.revealed .ch .t{font-size:calc(clamp(34px,3.8vw,72px) * var(--cs,1))}
 .qview.revealed .ch .tally{font-size:calc(clamp(24px,2.06vw,35px) * var(--cs,1))}
 .qview.revealed .ch .hl-inline{font-size:calc(clamp(26px,2.54vw,45px) * var(--cs,1));padding-top:7px}
 

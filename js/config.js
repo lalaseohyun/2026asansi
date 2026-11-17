@@ -1,7 +1,7 @@
 // config.js — 행사 설정. 프로젝트마다 이 파일과 questions.js를 교체한다
 
 export const EVENT = {
-  title: '2026년 하반기 신규농업인 기초영농기술교육 협동퀴즈',
+  title: '2026년 하반기 신규농업인 기초영농기술교육',
   subtitle: '아산 신규농업인, 배운 걸 맞혀라!',
   lobbyMessage: 'QR코드를 접속해 주세요.',
   // 대기 화면 QR이 가리킬 참가자 주소. 진행자 화면을 어디서 열든(내 컴퓨터의 localhost 포함) 항상 이 주소로 QR을 만든다.

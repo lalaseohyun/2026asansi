@@ -173,7 +173,10 @@ const josa = (w, withB, noB) => {
 };
 
 const center = (...kids) => h('div', { class: 'center' }, ...kids);
-const badges = L => h('div', { class: 'badges' }, h('span', { class: 'badge num' }, `문제 ${L.no} / ${L.total}`));
+const badges = L => h('div', { class: 'badges' }, h('span', { class: 'badge num' },
+  L.practice ? '연습문제' : `문제 ${L.no} / ${L.total}`));
+// 2지선다 O/X 문항이면 번호(①②) 대신 O·X로 보여준다.
+const isOX = L => L.choices && L.choices.length === 2 && L.choices.every(c => c === 'O' || c === 'X');
 const waitbox = (title, sub, slim) => h('div', { class: `waitbox ${slim ? 'slim' : ''}` },
   h('div', { class: 'pulse' }), h('div', { class: 'wt' }, title), h('div', { class: 'ws' }, sub));
 
@@ -217,6 +220,9 @@ function viewPin() {
 function viewQuiz() {
   const L = S.live;
   const mine = S.myAnswer?.choice ?? (S.pending?.qid === L.id ? S.pending.choice : null);
+  const ox = isOX(L);
+  // 제출 버튼·대기 문구에 쓰는 라벨: OX면 'O'/'X', 아니면 '①번'
+  const pickLabel = i => ox ? L.choices[i] : numLabel(i);
 
   if (L.revealed) {
     const ok = mine === L.answer;
@@ -225,9 +231,10 @@ function viewQuiz() {
       h('div', { class: `verdict ${mine === null ? '' : ok ? 'ok' : 'no'}` },
         h('div', { class: 'mk' }, mine === null ? '–' : ok ? 'O' : 'X'),
         h('div', { class: 'lb' }, mine === null ? '답을 제출하지 않았어요' : ok ? '정답입니다!' : '아쉬워요'),
-        h('div', { class: 'an' }, `정답 · ${MARKS[L.answer]} ${L.choices[L.answer]}`)),
+        h('div', { class: 'an' }, `정답 · ${ox ? L.choices[L.answer] : `${MARKS[L.answer]} ${L.choices[L.answer]}`}`)),
       L.explanation && h('div', { class: 'card' },
-        h('div', { class: 'lb' }, '해설'), paragraphs(L.explanation))
+        h('div', { class: 'lb' }, '해설'), paragraphs(L.explanation),
+        L.source && h('div', { class: 'src' }, L.source))
     ];
   }
 
@@ -238,19 +245,19 @@ function viewQuiz() {
 
   if (mine !== null) {
     return [badges(L), S.myAnswer
-      ? waitbox(`✓ ${numLabel(mine)} 제출 완료`, ['잠시만 기다려주세요', h('br'), '곧 정답을 공개합니다'])
-      : waitbox(`${numLabel(mine)} 재전송 중…`, ['연결이 돌아오면 자동으로 다시 보냅니다', h('br'), '화면을 닫지 마세요'])];
+      ? waitbox(`✓ ${pickLabel(mine)} 제출 완료`, ['잠시만 기다려주세요', h('br'), '곧 정답을 공개합니다'])
+      : waitbox(`${pickLabel(mine)} 재전송 중…`, ['연결이 돌아오면 자동으로 다시 보냅니다', h('br'), '화면을 닫지 마세요'])];
   }
 
   if (!L.open) return [badges(L), waitbox('답안이 마감되었어요', '곧 정답을 공개합니다')];
 
   return [
     badges(L),
-    h('div', { class: 'opts' }, L.choices.map((c, i) =>
+    h('div', { class: `opts ${ox ? 'ox' : ''}` }, L.choices.map((c, i) =>
       h('button', { class: `opt ${S.pick === i ? 'sel' : ''}`, disabled: S.sending, onclick: () => { S.pick = i; draw(); } },
-        h('span', { class: 'n' }, MARKS[i])))),
+        h('span', { class: 'n' }, ox ? c : MARKS[i])))),
     h('button', { class: 'primary submit', disabled: S.pick === null || S.sending, onclick: submitAnswer },
-      S.sending ? '제출 중…' : S.pick === null ? '답을 골라주세요' : `${numLabel(S.pick)} 제출`),
+      S.sending ? '제출 중…' : S.pick === null ? '답을 골라주세요' : `${pickLabel(S.pick)} 제출`),
     h('div', { class: 'status' }, '문제와 보기는 앞 화면에서 확인해주세요 · 제출 후에는 바꿀 수 없어요')
   ];
 }

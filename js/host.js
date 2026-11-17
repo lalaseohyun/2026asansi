@@ -13,6 +13,10 @@ import { h, batcher, paragraphs, MARKS } from './dom.js';
 const root = document.getElementById('app');
 const TEAMS = teamList();
 const JOIN_URL = EVENT.joinUrl || new URL('index.html', location.href).href;
+// 연습문제를 뺀 실제 문제 수. '문제 N / REAL_TOTAL' 과 채점에 쓴다.
+const REAL_TOTAL = QUESTIONS.filter(q => !q.practice).length;
+// 2지선다 O/X 문항인지. 번호를 빼고 O·X만 크게 보여준다.
+const isOX = q => q.choices.length === 2 && q.choices.every(c => c === 'O' || c === 'X');
 
 const S = {
   auth: 'loading',          // loading | key | ready | error
@@ -41,9 +45,9 @@ const submitted = q => realAnswers(S.answers?.[q.id]).filter(([k]) => TEAMS.some
 
 // 순위에는 정답이 공개된 문제만 넣는다. 안 그러면 화면의 순위로 정답이 샌다.
 function revealedQuestions(s = st()) {
-  if (s.phase === 'final') return QUESTIONS.filter(q => s.asked.includes(q.id));
+  if (s.phase === 'final') return QUESTIONS.filter(q => s.asked.includes(q.id) && !q.practice);
   if (s.phase !== 'quiz') return [];
-  return QUESTIONS.filter((q, i) => i < s.index || (i === s.index && s.revealed));
+  return QUESTIONS.filter((q, i) => !q.practice && (i < s.index || (i === s.index && s.revealed)));
 }
 const ranking = s => rank(revealedQuestions(s), S.answers, TEAMS, EVENT.tieBreak);
 
@@ -103,18 +107,24 @@ function startHost() {
 
 // ── 상태 쓰기: state와 live를 항상 한 번에 쓴다 ───────────
 
-async function commit(next, extra = {}) {
-  if (S.busy) return;
-  if (DEMO) { demoCommit(normalizeState(next), extra); return; }
-  S.busy = true; draw();
+// 쓰기를 순서대로 잇는 체인. 화면은 먼저 바꾸고(낙관적), 쓰기는 이 체인에서 차례로 처리한다.
+let writeChain = Promise.resolve();
+
+function commit(next, extra = {}) {
   const state = normalizeState(next);
+  if (DEMO) { demoCommit(state, extra); return; }
   const live = deriveLive(state, QUESTIONS, {
     ranking: state.phase === 'final' && EVENT.showRanking ? ranking(state) : undefined
   });
-  const res = await safeWrite('/', { ...extra, 'quiz/state': state, 'quiz/live': live }, { mode: 'update' });
-  S.busy = false;
-  S.error = res.ok ? '' : `저장 실패 (${res.error}). 다시 눌러 주세요.`;
+  // 낙관적 업데이트: 네트워크 왕복을 기다리지 않고 화면을 즉시 바꾼다(진행자 조작이 끊기지 않게).
+  S.state = state;
+  S.error = '';
   draw();
+  // 쓰기는 보낸 순서대로 처리해 옛 상태가 새 상태를 덮지 않게 한다. 실패하면 그때만 알린다.
+  writeChain = writeChain.then(async () => {
+    const res = await safeWrite('/', { ...extra, 'quiz/state': state, 'quiz/live': live }, { mode: 'update' });
+    if (!res.ok) { S.error = `저장 실패 (${res.error}). 다시 눌러 주세요.`; draw(); }
+  });
 }
 
 function demoCommit(state, extra) {
@@ -159,8 +169,7 @@ const actions = {
     const s = st(), q = currentQ();
     if (s.phase === 'lobby') return;
     if (s.phase === 'final') return actions.goto(QUESTIONS.length - 1);
-    if (s.revealed && S.showExplain) { S.showExplain = false; draw(); return; }
-    if (s.revealed) return commit({ ...s, revealed: false });
+    if (s.revealed) { S.showExplain = false; return commit({ ...s, revealed: false }); }
     if (s.index > 0 && !s.open) return actions.goto(s.index - 1);
     if (s.index === 0 && !s.asked.includes(q.id)) return actions.home();
   },
@@ -169,7 +178,8 @@ const actions = {
     return commit({ ...s, open: true, asked: [...new Set([...s.asked, currentQ().id])] });
   },
   close: () => commit({ ...st(), open: false }),
-  reveal: () => commit({ ...st(), open: false, revealed: true }),
+  // 정답 공개와 동시에 해설도 바로 띄운다(진행자 화면에서 '해설 보기'를 따로 누르지 않는다).
+  reveal() { S.showExplain = true; return commit({ ...st(), open: false, revealed: true }); },
   next() {
     S.showExplain = false;
     return commit({ ...st(), index: st().index + 1, open: false, revealed: false });
@@ -214,8 +224,7 @@ function primary() {
   }
   if (s.phase !== 'quiz' || !q) return null;
   if (s.revealed) {
-    // 해설은 진행자 화면에서만 한 단계 더 나눈다. 참가자 휴대폰에는 정답 공개와 함께 이미 나가 있다.
-    if (q.explanation && !S.showExplain) return { label: '해설 보기', run: () => { S.showExplain = true; draw(); } };
+    // 정답 공개와 함께 해설이 이미 나와 있으므로, 다음 단계는 바로 '다음 문제'다.
     return s.index >= QUESTIONS.length - 1
       ? { label: EVENT.showRanking ? '최종 순위' : '퀴즈 종료', run: actions.final }
       : { label: '다음 문제', run: actions.next };
@@ -317,11 +326,12 @@ function viewQuestion() {
   const choiceOf = t => subs.find(([k]) => k === String(t.id))?.[1]?.choice ?? null;
   const asked = s.asked.includes(q.id) || s.revealed;
   const n = q.choices.length;
-  const long = q.choices.some(c => c.length > 7);
+  const ox = isOX(q);
+  const long = !ox && q.choices.some(c => c.length > 7);
 
   const explain = s.revealed && S.showExplain && q.explanation;
   const choices = h('div', {
-    class: `choices ${long ? 'long' : ''}`, style: `--n:${long ? 2 : n};${veil(asked)}`
+    class: `choices ${ox ? 'ox' : long ? 'long' : ''}`, style: `--n:${long ? 2 : n};${veil(asked)}`
   }, q.choices.map((c, i) => {
     const cnt = subs.filter(([, a]) => a.choice === i).length;
     return h('div', { class: `ch ${s.revealed ? (i === q.answer ? 'correct' : 'dimmed') : ''}` },
@@ -352,14 +362,16 @@ function viewQuestion() {
   }
 
   return h('div', { class: `qview ${s.revealed ? 'revealed' : ''}` },
-    h('div', { class: 'badges' }, h('span', { class: 'badge num' }, `문제 ${q.no} / ${QUESTIONS.length}`)),
+    h('div', { class: 'badges' }, h('span', { class: 'badge num' },
+      q.practice ? '연습문제' : `문제 ${q.no} / ${REAL_TOTAL}`)),
     h('div', { class: 'q' }, q.question),
     choices,
     h('div', { class: 'qbottom' }, foot,
       h('div', { class: 'pagedots' }, QUESTIONS.map((_, i) => h('i', { class: i === s.index ? 'on' : '' })))),
-    // 해설은 화면을 바꾸지 않고 아래에서 올라오는 창으로 덮는다.
+    // 해설은 화면을 바꾸지 않고 아래에서 올라오는 창으로 덮는다. 출처는 연회색으로 작게.
     explain && h('div', { class: 'answerbox sheet' },
-      paragraphs(q.explanation)));
+      ...paragraphs(q.explanation),
+      q.source && h('div', { class: 'src' }, q.source)));
 }
 
 function viewRank(title) {
@@ -401,7 +413,7 @@ function viewControls() {
       h('div', { class: 'qnav' }, QUESTIONS.map((x, i) => h('button', {
         class: inQuiz && i === s.index ? 'on' : s.asked.includes(x.id) ? 'done' : '',
         disabled: S.busy, onclick: () => actions.goto(i)
-      }, x.no))),
+      }, x.practice ? '연' : x.no))),
       h('button', { disabled: S.busy || !p, onclick: () => p?.run() }, '▶'),
       inQuiz && h('span', { class: 'pill' }, '제출 ', h('b', null, submitted(q).length), ` / ${TEAMS.length} · ${status}`),
       DEMO && h('span', { class: 'pill' }, '데모 · 저장 안 됨'),

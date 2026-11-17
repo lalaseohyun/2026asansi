@@ -8,9 +8,9 @@
 .choices.long .ch{flex-direction:row;justify-content:flex-start;text-align:left;
   gap:clamp(14px,1.4vw,28px);padding:calc(clamp(12px,1.8vh,26px) * var(--cs,1)) clamp(18px,1.8vw,34px)}
 .choices.long .ch .n{flex:0 0 auto}
-.choices.long .ch .t{flex:1;font-size:calc(clamp(22px,2.7vw,52px) * var(--cs,1))}
+.choices.long .ch .t{flex:1;font-size:calc(clamp(36px,4.4vw,88px) * var(--cs,1))}
 .choices.long .ch .tally{flex:0 0 auto;white-space:nowrap}
-.qview.revealed .choices.long .ch .t{font-size:calc(clamp(18px,2.1vw,40px) * var(--cs,1))}
+.qview.revealed .choices.long .ch .t{font-size:calc(clamp(27px,3.1vw,62px) * var(--cs,1))}
 
 /* 존 이름이 'D+G'처럼 길어도 원 안에 들어가게 */
 .chip.wide{font-size:calc(clamp(22px,2.3vw,40px) * var(--cs,1))}
